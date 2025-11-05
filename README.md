@@ -95,12 +95,8 @@ Mini-Project-PSDL-main/
 - All predictions are permanently stored in the blockchain
 - The blockchain ensures tamper-proof audit trails
 
-## License
-
-MIT License
-
 ---
 
 **Status**: ✅ Operational  
-**Model**: Retrained with 100% accuracy on AI speech  
+**Model**: Retrained with 94% accuracy on AI speech  
 **Ready**: Yes 🚀
