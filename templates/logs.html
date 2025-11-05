@@ -1,273 +1,360 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detection History - Voice Deepfake Detector</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .container {
-      max-width: 1200px;
-      padding: 2rem 1rem;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 3rem;
-      animation: fadeInDown 0.8s ease-out;
-    }
-
-    .header-icon {
-      font-size: 3.5rem;
-      color: white;
-      margin-bottom: 1rem;
-      animation: pulse 2s infinite;
-    }
-
-    .main-title {
-      color: white;
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .subtitle {
-      color: rgba(255,255,255,0.9);
-      font-size: 1.1rem;
-    }
-
-    .logs-card {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      animation: fadeInUp 0.8s ease-out;
-      overflow: hidden;
-    }
-
-    .logs-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .log-item {
-      background: #f8fafc;
-      border-radius: 15px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-      border-left: 4px solid #cbd5e1;
-      animation: fadeInUp 0.5s ease-out;
-    }
-
-    .log-item:hover {
-      transform: translateX(5px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .log-item.real {
-      border-left-color: #10b981;
-      background: linear-gradient(to right, #ecfdf5 0%, #f8fafc 100%);
-    }
-
-    .log-item.fake {
-      border-left-color: #ef4444;
-      background: linear-gradient(to right, #fef2f2 0%, #f8fafc 100%);
-    }
-
-    .log-filename {
-      font-weight: 600;
-      color: #1e293b;
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .log-prediction {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      border-radius: 50px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .prediction-real {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
-
-    .prediction-fake {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-    }
-
-    .log-timestamp {
-      color: #64748b;
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #64748b;
-    }
-
-    .empty-icon {
-      font-size: 4rem;
-      color: #cbd5e1;
-      margin-bottom: 1rem;
-    }
-
-    .back-btn {
-      background: white;
-      color: #6366f1;
-      padding: 0.75rem 2rem;
-      border-radius: 50px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      margin-top: 2rem;
-    }
-
-    .back-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      color: #6366f1;
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 15px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-
-    .stat-number {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-
-    @keyframes fadeInDown {
-      from {
-        opacity: 0;
-        transform: translateY(-30px);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detection History - Voice Deepfake Detector</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #14b8a6; /* Vibrant turquoise */
+        --secondary-color: #0ea5e9; /* Sky blue accent */
+        --success-color: #10b981; /* Success green */
+        --danger-color: #ef4444; /* Alert red */
+        --bg-gradient-start: #06b6d4; /* Turquoise start */
+        --bg-gradient-end: #3b82f6; /* Blue end */
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
+      body.dark-mode {
+        --bg-gradient-start: #0f172a;
+        --bg-gradient-end: #1e293b;
+        --card-bg: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
 
-    @keyframes pulse {
-      0%, 100% {
-        transform: scale(1);
+      body {
+        background: linear-gradient(
+          135deg,
+          var(--bg-gradient-start) 0%,
+          var(--bg-gradient-end) 100%
+        );
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
-      50% {
-        transform: scale(1.05);
-      }
-    }
 
-    @media (max-width: 768px) {
+      .container {
+        max-width: 1200px;
+        padding: 2rem 1rem;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.8s ease-out;
+      }
+
+      .header-icon {
+        font-size: 3.5rem;
+        color: white;
+        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
+      }
+
       .main-title {
-        font-size: 2rem;
+        color: white;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
       }
-      
+
+      .subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+      }
+
       .logs-card {
-        padding: 1.5rem;
+        background: var(--card-bg, white);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: fadeInUp 0.8s ease-out;
+        overflow: hidden;
       }
-    }
-  </style>
-</head>
-<body>
 
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-icon">
-      <i class="fas fa-history"></i>
+      .logs-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(
+          90deg,
+          var(--bg-gradient-start) 0%,
+          var(--bg-gradient-end) 100%
+        );
+      }
+
+      .log-item {
+        background: #f8fafc;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid #cbd5e1;
+        animation: fadeInUp 0.5s ease-out;
+      }
+
+      .log-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .log-item.real {
+        border-left-color: var(--success-color);
+        background: linear-gradient(to right, #fff5f5 0%, #ffffff 100%);
+      }
+
+      .log-item.fake {
+        border-left-color: var(--danger-color);
+        background: linear-gradient(to right, #fef2f2 0%, #ffffff 100%);
+      }
+
+      .log-filename {
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .log-prediction {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .prediction-real {
+        background: linear-gradient(
+          135deg,
+          var(--success-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+      }
+
+      .prediction-fake {
+        background: linear-gradient(
+          135deg,
+          var(--danger-color) 0%,
+          #dc2626 100%
+        );
+        color: white;
+      }
+
+      .log-timestamp {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #64748b;
+      }
+
+      .empty-icon {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+      }
+
+      .back-btn {
+        background: white;
+        color: var(--secondary-color);
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+      }
+
+      .back-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        color: var(--secondary-color);
+      }
+
+      /* Theme toggle button */
+      .theme-toggle {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          var(--bg-gradient-start) 0%,
+          var(--bg-gradient-end) 100%
+        );
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-title {
+          font-size: 2rem;
+        }
+
+        .logs-card {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="theme-toggle" id="themeToggle">
+      <i class="fas fa-moon" id="themeIcon"></i>
+      <span id="themeText">Dark</span>
     </div>
-    <h1 class="main-title">Detection History</h1>
-    <p class="subtitle">Complete log of all audio authenticity checks</p>
-  </div>
-
-  <!-- Logs Card -->
-  <div class="logs-card position-relative">
-    {% if logs %}
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-number">{{ logs|length }}</div>
-          <div class="stat-label">Total Detections</div>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-icon">
+          <i class="fas fa-history"></i>
         </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ logs|selectattr('prediction', 'equalto', 'Real')|list|length }}</div>
-          <div class="stat-label">Real Audio</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ logs|selectattr('prediction', 'equalto', 'Fake')|list|length }}</div>
-          <div class="stat-label">Fake Audio</div>
-        </div>
+        <h1 class="main-title">Detection History</h1>
+        <p class="subtitle">Complete log of all audio authenticity checks</p>
       </div>
 
-      <!-- Log Items -->
-      {% for log in logs|reverse %}
-        <div class="log-item {{ 'real' if log.prediction == 'Real' else 'fake' }}" style="animation-delay: {{ loop.index0 * 0.05 }}s">
+      <!-- Logs Card -->
+      <div class="logs-card position-relative">
+        {% if logs %}
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-number">{{ logs|length }}</div>
+            <div class="stat-label">Total Detections</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">
+              {{ logs|selectattr('prediction', 'equalto', 'Real')|list|length }}
+            </div>
+            <div class="stat-label">Real Audio</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">
+              {{ logs|selectattr('prediction', 'equalto', 'Fake')|list|length }}
+            </div>
+            <div class="stat-label">Fake Audio</div>
+          </div>
+        </div>
+
+        <!-- Log Items -->
+        {% for log in logs|reverse %}
+        <div
+          class="log-item {{ 'real' if log.prediction == 'Real' else 'fake' }}"
+          style="animation-delay: {{ loop.index0 * 0.05 }}s"
+        >
           <div class="log-filename">
             <i class="fas fa-file-audio"></i>
             {{ log.filename }}
           </div>
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span class="log-prediction {{ 'prediction-real' if log.prediction == 'Real' else 'prediction-fake' }}">
-              <i class="fas fa-{{ 'check-circle' if log.prediction == 'Real' else 'exclamation-triangle' }} me-1"></i>
+          <div
+            class="d-flex justify-content-between align-items-center flex-wrap gap-2"
+          >
+            <span
+              class="log-prediction {{ 'prediction-real' if log.prediction == 'Real' else 'prediction-fake' }}"
+            >
+              <i
+                class="fas fa-{{ 'check-circle' if log.prediction == 'Real' else 'exclamation-triangle' }} me-1"
+              ></i>
               {{ log.prediction|upper }}
             </span>
             <div class="log-timestamp">
@@ -276,28 +363,69 @@
             </div>
           </div>
         </div>
-      {% endfor %}
-    {% else %}
-      <!-- Empty State -->
-      <div class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-inbox"></i>
+        {% endfor %} {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <h3 style="color: #64748b; margin-bottom: 1rem">
+            No Detection History Yet
+          </h3>
+          <p style="color: #94a3b8">
+            Upload an audio file to start detecting deepfakes!
+          </p>
         </div>
-        <h3 style="color: #64748b; margin-bottom: 1rem;">No Detection History Yet</h3>
-        <p style="color: #94a3b8;">Upload an audio file to start detecting deepfakes!</p>
+        {% endif %}
+
+        <!-- Back Button -->
+        <div class="text-center">
+          <a href="{{ url_for('index') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Detector
+          </a>
+        </div>
       </div>
-    {% endif %}
-
-    <!-- Back Button -->
-    <div class="text-center">
-      <a href="{{ url_for('index') }}" class="back-btn">
-        <i class="fas fa-arrow-left"></i>
-        Back to Detector
-      </a>
     </div>
-  </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Apply saved theme on load
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        const body = document.body;
+        const icon = document.getElementById("themeIcon");
+        const text = document.getElementById("themeText");
+        if (savedTheme === "dark") {
+          body.classList.add("dark-mode");
+          if (icon && text) {
+            icon.classList.remove("fa-moon");
+            icon.classList.add("fa-sun");
+            text.textContent = "Light";
+          }
+        }
+      })();
+
+      // Toggle theme
+      const themeToggle = document.getElementById("themeToggle");
+      const themeIcon = document.getElementById("themeIcon");
+      const themeText = document.getElementById("themeText");
+      if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+          document.body.classList.toggle("dark-mode");
+          if (document.body.classList.contains("dark-mode")) {
+            themeIcon.classList.remove("fa-moon");
+            themeIcon.classList.add("fa-sun");
+            themeText.textContent = "Light";
+            localStorage.setItem("theme", "dark");
+          } else {
+            themeIcon.classList.remove("fa-sun");
+            themeIcon.classList.add("fa-moon");
+            themeText.textContent = "Dark";
+            localStorage.setItem("theme", "light");
+          }
+        });
+      }
+    </script>
+  </body>
 </html>
