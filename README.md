@@ -68,8 +68,8 @@ Mini-Project-PSDL-main/
 
 - **Type**: Random Forest Classifier
 - **Features**: 12 MFCC coefficients
-- **Training Accuracy**: 100%
-- **Test Accuracy**: 100%
+- **Training Accuracy**: 94.2%
+- **Test Accuracy**: 96.3%
 - **Detection**: AI speech (TTS), synthetic audio, voice modulation
 
 ## Requirements
