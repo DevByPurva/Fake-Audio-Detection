@@ -707,29 +707,37 @@
       </div>
 
       <!-- Flash Messages -->
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        class="alert alert-{{ category }} alert-dismissible fade show"
-        role="alert"
-      >
-        <i
-          class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"
-        ></i>
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close btn-close-white"
-          data-bs-dismiss="alert"
-        ></button>
-      </div>
-      {% endfor %} {% endif %} {% endwith %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            {% if message is iterable and message is not string %}
+              {% for msg in message %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                  <div>{{ msg }}</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                  <div>{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
 
       <!-- Upload Card -->
       <div class="upload-card">
         <form
           method="POST"
-          action="{{ url_for('upload_file') }}"
+          action="{{ url_for('handle_upload') }}"
           enctype="multipart/form-data"
           id="uploadForm"
         >

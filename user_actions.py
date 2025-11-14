@@ -5,13 +5,19 @@ from datetime import datetime
 LOG_FILE = 'data/sample_alerts.json'
 os.makedirs('data', exist_ok=True)
 
-def log_action(filename, label):
+def log_action(filename, label, transcription=None):
     """
-    Logs a file prediction result with timestamp into a JSON file.
+    Logs a file prediction result with timestamp and transcription into a JSON file.
+    
+    Args:
+        filename (str): Name of the audio file
+        label (str): Prediction label ('Real' or 'Fake')
+        transcription (str, optional): Transcribed text from the audio
     """
     entry = {
         'filename': filename,
         'prediction': label,
+        'transcription': transcription,
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 

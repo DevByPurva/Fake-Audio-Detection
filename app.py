@@ -1,15 +1,18 @@
 import os
 import json
+import tempfile
 from datetime import datetime
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 
 import librosa
 import numpy as np
 import joblib
+import speech_recognition as sr
+from pydub import AudioSegment
 
-from user_actions import log_action  # your helper to append to data/sample_alerts.json
+from user_actions import log_action
 
 # Import the Blockchain class
 from blockchain import Blockchain
@@ -85,7 +88,81 @@ def index():
     """Render upload form and any flash messages."""
     return render_template('index.html')
 
+def transcribe_audio(audio_path):
+    """Convert speech to text using Google's speech recognition."""
+    r = sr.Recognizer()
+    
+    # Convert to WAV if needed (pydub can handle other formats)
+    if not audio_path.lower().endswith('.wav'):
+        sound = AudioSegment.from_file(audio_path)
+        wav_path = audio_path + '.wav'
+        sound.export(wav_path, format='wav')
+        audio_path = wav_path
+    
+    try:
+        with sr.AudioFile(audio_path) as source:
+            audio_data = r.record(source)
+            text = r.recognize_google(audio_data)
+            return text
+    except sr.UnknownValueError:
+        return "Could not understand audio"
+    except sr.RequestError as e:
+        return f"Could not request results; {e}"
+    except Exception as e:
+        return f"Error during transcription: {str(e)}"
+    finally:
+        # Clean up temporary WAV file if it was created
+        if 'wav_path' in locals() and os.path.exists(wav_path):
+            os.remove(wav_path)
+
 @app.route('/upload', methods=['POST'])
+def handle_upload():
+    """Handle file upload, prediction, and transcription."""
+    # 1. Validate file present
+    if 'file' not in request.files:
+        flash('No file part in request', 'danger')
+        return redirect(url_for('index'))
+    file = request.files['file']
+    if file.filename == '':
+        flash('No file selected', 'danger')
+        return redirect(url_for('index'))
+
+    # 2. Validate extension
+    if not allowed_file(file.filename):
+        flash('Invalid file type; please upload a .wav file', 'danger')
+        return redirect(url_for('index'))
+
+    # 3. Save file
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+
+    # 4. Extract features & predict
+    features = extract_features(filepath)
+    pred = model.predict(features)[0]  # 0 = Real, 1 = Fake
+    is_real = (pred == 0)
+    label = 'Real' if is_real else 'Fake'
+    
+    # 5. Transcribe the audio
+    transcription = transcribe_audio(filepath)
+    
+    # 6. Log locally with transcription
+    log_action(filename, label, transcription)
+
+    # 7. Store the prediction in blockchain
+    send_to_blockchain(filename, is_real, datetime.now())
+
+    # 8. Prepare response with both detection and transcription
+    flash([
+        f'🎤 Voice detected as: {label}',
+        f'📝 Transcription: {transcription}'
+    ], 'success' if is_real else 'danger')
+
+    # 9. Remove file from the server after processing
+    os.remove(filepath)
+
+    return redirect(url_for('index'))
+
 def upload_file():
     # 1. Validate file present
     if 'file' not in request.files:
@@ -111,15 +188,23 @@ def upload_file():
     pred = model.predict(features)[0]  # 0 = Real, 1 = Fake
     is_real = (pred == 0)
     label = 'Real' if is_real else 'Fake'
-    flash(f'🎤 Voice detected as: {label}', 'success' if is_real else 'danger')
+    
+    # 5. Transcribe the audio
+    transcription = transcribe_audio(filepath)
+    
+    # 6. Log locally with transcription
+    log_action(filename, label, transcription)
 
-    # 5. Log locally
-    log_action(filename, label)
-
-    # 6. Store the prediction in blockchain
+    # 7. Store the prediction in blockchain
     send_to_blockchain(filename, is_real, datetime.now())
 
-    # 7. (Optional) Remove file from the server after processing to save space
+    # 8. Prepare response with both detection and transcription
+    flash([
+        f'🎤 Voice detected as: {label}',
+        f'📝 Transcription: {transcription}'
+    ], 'success' if is_real else 'danger')
+
+    # 9. Remove file from the server after processing
     os.remove(filepath)
 
     return redirect(url_for('index'))

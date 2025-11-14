@@ -248,5 +248,22 @@
         "filename": "recording_1762334066361.wav",
         "prediction": "Real",
         "timestamp": "2025-11-05 14:44:32"
+    },
+    {
+        "filename": "Fake_sample.wav",
+        "prediction": "Fake",
+        "timestamp": "2025-11-15 01:10:45"
+    },
+    {
+        "filename": "Fake_sample.wav",
+        "prediction": "Fake",
+        "transcription": "the still smell of old bearings it takes heat to bring out the order a cold storage find with him tacos Alpha store are my favourite is just for food is the hard cross bun",
+        "timestamp": "2025-11-15 01:21:09"
+    },
+    {
+        "filename": "Fake_sample.wav",
+        "prediction": "Fake",
+        "transcription": "the still smell of old bearings it takes heat to bring out the order a cold storage find with him tacos Alpha store are my favourite is just for food is the hard cross bun",
+        "timestamp": "2025-11-15 01:34:08"
     }
 ]
