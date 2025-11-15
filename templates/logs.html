@@ -400,6 +400,14 @@
               {{ log.timestamp }}
             </div>
           </div>
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <a href="{{ url_for('view_certificate', ts=log.timestamp) }}" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-qrcode me-1"></i>Certificate QR
+            </a>
+            <a href="{{ url_for('download_certificate', ts=log.timestamp) }}" class="btn btn-sm btn-outline-secondary">
+              <i class="fas fa-download me-1"></i>Download Certificate
+            </a>
+          </div>
         </div>
         {% endfor %} {% else %}
         <!-- Empty State -->

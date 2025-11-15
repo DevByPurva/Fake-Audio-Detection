@@ -2,15 +2,18 @@ import os
 import json
 import tempfile
 from datetime import datetime
+import hashlib
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 
 import librosa
 import numpy as np
 import joblib
+import qrcode
 import speech_recognition as sr
 from pydub import AudioSegment
+from PIL import Image, ImageDraw, ImageFont
 
 from user_actions import log_action
 
@@ -84,6 +87,86 @@ def send_to_blockchain(filename: str, is_real: bool, timestamp: datetime):
     prev_hash = last_block['hash'] if last_block else 'GENESIS'
     blockchain.create_new_block(predicted_label, confidence, prev_hash)
     print(f"[BLOCKCHAIN] Stored in blockchain: {predicted_label} with confidence: {confidence}")
+
+def generate_file_hash(file_path):
+    hasher = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+def generate_certificate_qr(certificate_data, filename, timestamp_value):
+    cert_dir = os.path.join('static', 'certs')
+    os.makedirs(cert_dir, exist_ok=True)
+    safe_name = os.path.splitext(secure_filename(filename))[0]
+    safe_timestamp = str(timestamp_value).replace(":", "").replace(" ", "").replace("-", "")
+    qr_filename = f"cert_{safe_name}_{safe_timestamp}.png"
+    qr_path = os.path.join(cert_dir, qr_filename)
+    if not os.path.exists(qr_path):
+        qr_payload = json.dumps(certificate_data, separators=(",", ":"))
+        qr = qrcode.QRCode(
+            version=2,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=6,
+            border=2
+        )
+        qr.add_data(qr_payload)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        img.save(qr_path)
+    return qr_path
+
+def generate_certificate_image(certificate_data, filename, timestamp_value):
+    cert_dir = os.path.join('static', 'certs')
+    os.makedirs(cert_dir, exist_ok=True)
+    safe_name = os.path.splitext(secure_filename(filename))[0]
+    safe_timestamp = str(timestamp_value).replace(":", "").replace(" ", "").replace("-", "")
+    cert_filename = f"certimg_{safe_name}_{safe_timestamp}.jpg"
+    cert_path = os.path.join(cert_dir, cert_filename)
+
+    qr_path = generate_certificate_qr(certificate_data, filename, timestamp_value)
+    qr_img = Image.open(qr_path).convert("RGB")
+
+    width, height = 1200, 675
+    img = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(img)
+
+    try:
+        font_title = ImageFont.truetype("DejaVuSans-Bold.ttf", 42)
+        font_body = ImageFont.truetype("DejaVuSans.ttf", 22)
+        font_small = ImageFont.truetype("DejaVuSans.ttf", 16)
+    except Exception:
+        font_title = ImageFont.load_default()
+        font_body = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+
+    draw.text((40, 30), "Voice Integrity Certificate", font=font_title, fill=(20, 20, 20))
+    draw.line([(40, 90), (width - 40, 90)], fill=(200, 200, 200), width=2)
+
+    left_x = 50
+    y = 120
+    line_h = 36
+
+    def draw_kv(key, value):
+        nonlocal y
+        draw.text((left_x, y), f"{key}:", font=font_body, fill=(40, 40, 40))
+        draw.text((left_x + 260, y), str(value), font=font_body, fill=(0, 0, 0))
+        y += line_h
+
+    draw_kv("File", certificate_data.get("filename"))
+    draw_kv("Result", certificate_data.get("result"))
+    draw_kv("Model ID", certificate_data.get("model_id"))
+    draw_kv("Timestamp", certificate_data.get("timestamp"))
+
+    qr_size = 300
+    qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+    qr_x = width - qr_size - 80
+    qr_y = 150
+    img.paste(qr_img, (qr_x, qr_y))
+    draw.text((qr_x, qr_y + qr_size + 10), "Scan for authenticity", font=font_small, fill=(40, 40, 40))
+
+    img.save(cert_path, "JPEG", quality=90)
+    return cert_path
 
 # —— Routes ————————————————————————————————————————
 
@@ -211,6 +294,7 @@ def handle_upload():
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
+    file_hash = generate_file_hash(filepath)
 
     # 4. Extract features & predict
     features = extract_features(filepath)
@@ -225,7 +309,7 @@ def handle_upload():
     scam_label, scam_comment = analyze_scam_behavior(transcription)
 
     # 7. Log locally with transcription and scam analysis
-    log_action(filename, label, transcription, scam_label=scam_label, scam_comment=scam_comment)
+    log_action(filename, label, transcription, scam_label=scam_label, scam_comment=scam_comment, file_hash=file_hash)
 
     # 8. Store the prediction in blockchain
     send_to_blockchain(filename, is_real, datetime.now())
@@ -277,7 +361,7 @@ def upload_file():
     transcription = transcribe_audio(filepath)
     
     # 6. Log locally with transcription
-    log_action(filename, label, transcription)
+    log_action(filename, label, transcription, file_hash=file_hash)
 
     # 7. Store the prediction in blockchain
     send_to_blockchain(filename, is_real, datetime.now())
@@ -311,6 +395,85 @@ def view_blockchain():
     """Render the blockchain data from the database."""
     blockchain_data = blockchain.chain
     return render_template('blockchain.html', blockchain=blockchain_data)
+
+@app.route('/certificate')
+def view_certificate():
+    timestamp_value = request.args.get('ts')
+    if not timestamp_value:
+        flash('Certificate generation failed: missing timestamp', 'danger')
+        return redirect(url_for('logs'))
+    log_file = 'data/sample_alerts.json'
+    if not os.path.exists(log_file):
+        flash('Certificate generation failed: no detection history available', 'danger')
+        return redirect(url_for('logs'))
+    with open(log_file, 'r') as f:
+        try:
+            logs = json.load(f)
+        except json.JSONDecodeError:
+            logs = []
+    selected_log = None
+    for log in logs:
+        if log.get('timestamp') == timestamp_value:
+            selected_log = log
+            break
+    if not selected_log:
+        flash('Certificate generation failed: record not found', 'danger')
+        return redirect(url_for('logs'))
+    filename = selected_log.get('filename', 'Unknown')
+    prediction = selected_log.get('prediction', '')
+    result = 'REAL' if str(prediction).lower() == 'real' else 'FAKE'
+    model_id = 'voice_detector_v1'
+    file_hash = selected_log.get('file_hash')
+    if not file_hash:
+        file_hash = 'N/A'
+    certificate_data = {
+        'filename': filename,
+        'result': result,
+        'model_id': model_id,
+        'timestamp': timestamp_value,
+        'file_hash': file_hash
+    }
+    qr_path = generate_certificate_qr(certificate_data, filename, timestamp_value)
+    qr_relative = os.path.relpath(qr_path, 'static').replace('\\', '/')
+    block = {'data': certificate_data}
+    return render_template('certificate.html', block=block, qr_image=qr_relative)
+
+@app.route('/download_certificate')
+def download_certificate():
+    timestamp_value = request.args.get('ts')
+    if not timestamp_value:
+        flash('Certificate download failed: missing timestamp', 'danger')
+        return redirect(url_for('logs'))
+    log_file = 'data/sample_alerts.json'
+    if not os.path.exists(log_file):
+        flash('Certificate download failed: no detection history available', 'danger')
+        return redirect(url_for('logs'))
+    with open(log_file, 'r') as f:
+        try:
+            logs = json.load(f)
+        except json.JSONDecodeError:
+            logs = []
+    selected_log = None
+    for log in logs:
+        if log.get('timestamp') == timestamp_value:
+            selected_log = log
+            break
+    if not selected_log:
+        flash('Certificate download failed: record not found', 'danger')
+        return redirect(url_for('logs'))
+    filename = selected_log.get('filename', 'Unknown')
+    certificate_data = {
+        'filename': filename,
+        'result': 'REAL' if str(selected_log.get('prediction', '')).lower() == 'real' else 'FAKE',
+        'model_id': 'voice_detector_v1',
+        'timestamp': timestamp_value,
+        'file_hash': selected_log.get('file_hash')
+    }
+    cert_path = generate_certificate_image(certificate_data, filename, timestamp_value)
+    if not os.path.exists(cert_path):
+        flash('Certificate download failed: certificate not available', 'danger')
+        return redirect(url_for('logs'))
+    return send_file(cert_path, mimetype='image/jpeg', as_attachment=True, download_name='Voice_Integrity_Certificate.jpg')
 
 # —— Run the App ————————————————————————————————
 if __name__ == '__main__':

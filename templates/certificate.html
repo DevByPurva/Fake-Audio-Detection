@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Integrity Certificate</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .certificate-container {
+            background: white;
+            margin: 20px auto;
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 95%;
+            max-width: 1200px;
+            position: relative;
+            border: 8px solid #f8f9fa;
+        }
+
+        .certificate-container::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 2px solid #1e40af;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h2 {
+            font-size: 32px;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        .divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #1e40af, transparent);
+            margin: 30px 0;
+        }
+
+        .info-section {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 4px solid #1e40af;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .result-row {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .real {
+            color: #38a169;
+            font-weight: bold;
+            font-size: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fake {
+            color: #e53e3e;
+            font-weight: bold;
+            font-size: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qr-section {
+            text-align: center;
+            margin: 35px 0 25px 0;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .qr-section img {
+            width: 180px;
+            height: 180px;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .qr-text {
+            color: #718096;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .certificate-container {
+                padding: 30px 25px;
+            }
+
+            .header h2 {
+                font-size: 24px;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .info-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <div class="header">
+            <div class="icon">&#127911;</div>
+            <h2>Voice Integrity Certificate</h2>
+            <div class="subtitle">Official Verification Document</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-section">
+            <div class="info-row">
+                <span class="info-label">File Name</span>
+                <span class="info-value">{{ block.data.filename }}</span>
+            </div>
+
+            <div class="info-row result-row">
+                <span class="info-label">Verification Result</span>
+                <span class="info-value">
+                    {% if block.data.result == 'REAL' %}
+                        <span class="real">REAL ✅</span>
+                    {% else %}
+                        <span class="fake">FAKE 🚨</span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Model ID</span>
+                <span class="info-value">{{ block.data.model_id }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Timestamp</span>
+                <span class="info-value">{{ block.data.timestamp }}</span>
+            </div>
+        </div>
+
+        <div class="qr-section">
+            <img src="{{ url_for('static', filename=qr_image) }}" alt="Verification QR Code">
+            <div class="qr-text">🔗 Scan QR code to verify authenticity</div>
+        </div>
+
+        <div class="footer">
+            <a href="/" class="back-button">⬅ Back to Home</a>
+        </div>
+
+        <div class="watermark">VERIFIED</div>
+    </div>
+</body>
+</html>
