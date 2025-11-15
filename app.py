@@ -29,9 +29,13 @@ ALLOWED_EXTENSIONS = {'wav'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# —— Load Your Trained Model —————————————————————————— 
+# —— Load Your Trained Models —————————————————————————— 
 MODEL_PATH = 'model/voice_detector.pkl'
 model = joblib.load(MODEL_PATH)
+
+# Text-based scam / behavior classifier trained on BETTER30
+SCAM_MODEL_PATH = 'models/better30_scam_text_model.pkl'
+scam_text_model = None
 
 # —— Initialize Blockchain ———————————————————————————
 blockchain = Blockchain()  # Create a new blockchain instance
@@ -115,6 +119,77 @@ def transcribe_audio(audio_path):
         if 'wav_path' in locals() and os.path.exists(wav_path):
             os.remove(wav_path)
 
+
+def analyze_scam_behavior(transcription: str):
+    """Analyze transcript text for scam / behavior using the BETTER30 text model.
+
+    Returns a tuple (scam_label, scam_comment). If analysis is unavailable,
+    returns (None, None) without raising.
+    """
+    global scam_text_model
+
+    if not transcription or not isinstance(transcription, str):
+        return None, None
+
+    # Lazy-load the text classification model
+    if scam_text_model is None:
+        if not os.path.exists(SCAM_MODEL_PATH):
+            print(f"[SCAM_MODEL] Model file not found at {SCAM_MODEL_PATH}; skipping scam analysis.")
+            return None, None
+        try:
+            scam_text_model = joblib.load(SCAM_MODEL_PATH)
+            print("[SCAM_MODEL] Loaded scam behavior model.")
+        except Exception as e:
+            print(f"[SCAM_MODEL] Error loading scam model: {e}")
+            return None, None
+
+    try:
+        raw_label = scam_text_model.predict([transcription])[0]
+        raw_label_str = str(raw_label).strip().lower()
+    except Exception as e:
+        print(f"[SCAM_MODEL] Error during scam prediction: {e}")
+        return None, None
+
+    # Map raw labels from BETTER30 to user-friendly titles and comments
+    label_explanations = {
+        'legitimate': {
+            'title': 'Legitimate',
+            'comment': 'Call content appears legitimate with no obvious scam indicators.'
+        },
+        'neutral': {
+            'title': 'Neutral',
+            'comment': 'Call appears neutral with no strong suspicious patterns.'
+        },
+        'slightly_suspicious': {
+            'title': 'Slightly Suspicious',
+            'comment': 'Some mild signs of persuasion or pressure are present; call should be handled with caution.'
+        },
+        'suspicious': {
+            'title': 'Suspicious',
+            'comment': 'Clear suspicious patterns are present (e.g., urgency, pressure, or requests for sensitive information).'
+        },
+        'highly_suspicious': {
+            'title': 'Highly Suspicious',
+            'comment': 'Strong scam-like behavior detected; caller uses heavy pressure, threats, or emotional manipulation.'
+        },
+        'scam': {
+            'title': 'Scam',
+            'comment': 'Model considers this call a scam. Do not share personal or financial information.'
+        },
+        'potential_scam': {
+            'title': 'Potential Scam',
+            'comment': 'Patterns strongly resemble known scam tactics; independent verification is recommended.'
+        },
+    }
+
+    info = label_explanations.get(raw_label_str)
+    if info:
+        return info['title'], info['comment']
+
+    # Fallback if an unknown label is encountered
+    fallback_label = raw_label_str or 'Unknown'
+    return fallback_label.title(), f"Model classified this call as '{fallback_label}'. Review details carefully."
+
 @app.route('/upload', methods=['POST'])
 def handle_upload():
     """Handle file upload, prediction, and transcription."""
@@ -145,20 +220,29 @@ def handle_upload():
     
     # 5. Transcribe the audio
     transcription = transcribe_audio(filepath)
-    
-    # 6. Log locally with transcription
-    log_action(filename, label, transcription)
 
-    # 7. Store the prediction in blockchain
+    # 6. Analyze transcript for scam / behavior using text model
+    scam_label, scam_comment = analyze_scam_behavior(transcription)
+
+    # 7. Log locally with transcription and scam analysis
+    log_action(filename, label, transcription, scam_label=scam_label, scam_comment=scam_comment)
+
+    # 8. Store the prediction in blockchain
     send_to_blockchain(filename, is_real, datetime.now())
 
-    # 8. Prepare response with both detection and transcription
-    flash([
+    # 9. Prepare response with detection, transcription, and scam analysis
+    messages = [
         f'🎤 Voice detected as: {label}',
         f'📝 Transcription: {transcription}'
-    ], 'success' if is_real else 'danger')
+    ]
+    if scam_label:
+        messages.append(f'⚠️ Scam analysis: {scam_label}')
+    if scam_comment:
+        messages.append(f'🧠 Behavior insight: {scam_comment}')
 
-    # 9. Remove file from the server after processing
+    flash(messages, 'success' if is_real else 'danger')
+
+    # 10. Remove file from the server after processing
     os.remove(filepath)
 
     return redirect(url_for('index'))
