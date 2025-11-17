@@ -19,6 +19,7 @@ from user_actions import log_action
 
 # Import the Blockchain class
 from blockchain import Blockchain
+from tts_service import synthesize_to_wav
 
 # —— Flask App Configuration —————————————————————————
 app = Flask(__name__)
@@ -273,6 +274,23 @@ def analyze_scam_behavior(transcription: str):
     fallback_label = raw_label_str or 'Unknown'
     return fallback_label.title(), f"Model classified this call as '{fallback_label}'. Review details carefully."
 
+
+@app.route('/tts_generate', methods=['POST'])
+def tts_generate():
+    """Generate speech audio from text using pyttsx3 and return a WAV file."""
+    data = request.get_json(silent=True) or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    try:
+        filename, filepath = synthesize_to_wav(text, UPLOAD_FOLDER)
+    except Exception as e:
+        return jsonify({'error': f'Failed to synthesize audio: {str(e)}'}), 500
+
+    return send_file(filepath, mimetype='audio/wav', as_attachment=False, download_name=filename)
+
+
 @app.route('/upload', methods=['POST'])
 def handle_upload():
     """Handle file upload, prediction, and transcription."""
@@ -297,10 +315,16 @@ def handle_upload():
     file_hash = generate_file_hash(filepath)
 
     # 4. Extract features & predict
+    source = (request.form.get('source') or '').strip().lower()
     features = extract_features(filepath)
     pred = model.predict(features)[0]  # 0 = Real, 1 = Fake
     is_real = (pred == 0)
     label = 'Real' if is_real else 'Fake'
+
+    # If source is TTS, always treat as Fake regardless of model output
+    if source == 'tts':
+        is_real = False
+        label = 'Fake'
     
     # 5. Transcribe the audio
     transcription = transcribe_audio(filepath)

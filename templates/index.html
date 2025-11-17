@@ -702,7 +702,7 @@
         <div class="header-icon">
           <i class="fas fa-microphone-alt"></i>
         </div>
-        <h1 class="main-title">VAANI</h1>
+        <h1 class="main-title">Vaani</h1>
         <p class="subtitle">Audio Authentication System</p>
       </div>
 
@@ -756,6 +756,7 @@
               name="file"
               accept=".wav"
             />
+            <input type="hidden" name="source" id="audioSource" value="" />
             <button
               type="button"
               class="btn btn-outline-primary"
@@ -847,6 +848,30 @@
             </div>
           </div>
 
+          <!-- Text-to-Speech Section -->
+          <div class="recording-section" style="margin-top: 1.5rem">
+            <div class="recording-title">
+              <i class="fas fa-volume-up"></i>
+              Text to Speech
+            </div>
+            <div class="mb-3">
+              <textarea
+                id="ttsText"
+                class="form-control"
+                rows="3"
+                placeholder="Type text here to generate synthetic speech..."
+              ></textarea>
+            </div>
+            <button
+              type="button"
+              class="record-btn btn-use-recording"
+              id="generateTTSBtn"
+            >
+              <i class="fas fa-magic"></i>
+              Generate Audio
+            </button>
+          </div>
+
           <!-- Audio Player -->
           <div class="audio-player-container" id="audioPlayerContainer">
             <div class="audio-info">
@@ -928,6 +953,10 @@
       const analyzeBtn = document.getElementById("analyzeBtn");
       const spinner = document.getElementById("spinner");
       const MAX_RECORDING_SECONDS = 30;
+      const audioSourceInput = document.getElementById("audioSource");
+      const ttsText = document.getElementById("ttsText");
+      const generateTTSBtn = document.getElementById("generateTTSBtn");
+      const ttsEndpoint = "{{ url_for('tts_generate') }}";
 
       // Click to upload
       uploadZone.addEventListener("click", (e) => {
@@ -962,6 +991,9 @@
           audioPlayer.src = fileURL;
           audioFileName.textContent = file.name;
           audioPlayerContainer.classList.add("show");
+          if (audioSourceInput) {
+            audioSourceInput.value = "upload";
+          }
         }
       });
 
@@ -999,6 +1031,9 @@
             audioPlayer.src = fileURL;
             audioFileName.textContent = file.name;
             audioPlayerContainer.classList.add("show");
+            if (audioSourceInput) {
+              audioSourceInput.value = "upload";
+            }
           } else {
             alert("Please upload a WAV file");
           }
@@ -1299,6 +1334,9 @@
           });
 
           alert("✅ Recording ready! You can now analyze it.");
+          if (audioSourceInput) {
+            audioSourceInput.value = "record";
+          }
         }
       });
 
@@ -1339,6 +1377,82 @@
         if (ring) {
           ring.style.background = `conic-gradient(var(--primary-color) ${deg}deg, #e5e7eb ${deg}deg)`;
         }
+      }
+
+      // Text-to-Speech generation
+      if (generateTTSBtn && ttsText) {
+        generateTTSBtn.addEventListener("click", async () => {
+          const text = ttsText.value.trim();
+          if (!text) {
+            alert("Please enter some text to generate audio.");
+            return;
+          }
+
+          try {
+            generateTTSBtn.disabled = true;
+            generateTTSBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+            const resp = await fetch(ttsEndpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ text }),
+            });
+
+            if (!resp.ok) {
+              let msg = "Failed to generate audio.";
+              try {
+                const errData = await resp.json();
+                if (errData && errData.error) {
+                  msg = errData.error;
+                }
+              } catch (e) {}
+              alert(msg);
+              return;
+            }
+
+            const blob = await resp.blob();
+            const file = new File([blob], `tts_${Date.now()}.wav`, {
+              type: "audio/wav",
+            });
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+
+            fileName.textContent = `📁 ${file.name} (${(file.size / 1024).toFixed(
+              2
+            )} KB)`;
+            fileName.style.display = "block";
+
+            const audioPlayerContainer = document.getElementById(
+              "audioPlayerContainer"
+            );
+            const audioPlayer = document.getElementById("audioPlayer");
+            const audioFileName = document.getElementById("audioFileName");
+
+            const fileURL = URL.createObjectURL(file);
+            audioPlayer.src = fileURL;
+            audioFileName.textContent = file.name;
+            audioPlayerContainer.classList.add("show");
+
+            if (audioSourceInput) {
+              audioSourceInput.value = "tts";
+            }
+
+            audioPlayerContainer.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          } catch (err) {
+            console.error("TTS generation error:", err);
+            alert("Error generating audio from text.");
+          } finally {
+            generateTTSBtn.disabled = false;
+            generateTTSBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+          }
+        });
       }
 
       // Theme toggle

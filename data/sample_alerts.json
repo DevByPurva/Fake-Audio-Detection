@@ -329,5 +329,68 @@
         "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
         "file_hash": "a3f492d305016bc70f5949305cda5c576c754a80b608306fd61d76b315f7ca8b",
         "timestamp": "2025-11-15 19:23:55"
+    },
+    {
+        "filename": "1112259_normalized.wav",
+        "prediction": "Fake",
+        "transcription": "we would like to inform you that there is an order placed for Apple iPhone 11 Pro using your Amazon account if you do not authorised disorder press one or press to the authorised dis",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "7a1c7c955d9c92dde5980b5e0d7dc7d3d76ae49794ffdfd4f866bc95ae455fdd",
+        "timestamp": "2025-11-15 19:26:59"
+    },
+    {
+        "filename": "241125_normalized.wav",
+        "prediction": "Fake",
+        "transcription": "this message is intended to contact you regarding a legal enforcement action executed under your social security number for suspicious and fraudulent activities committed in the state of Texas and we just suspended your social security number ignoring this will be an intentional second attempt to avoid initial appearance before marriage",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "a3f492d305016bc70f5949305cda5c576c754a80b608306fd61d76b315f7ca8b",
+        "timestamp": "2025-11-16 14:08:10"
+    },
+    {
+        "filename": "1006882_normalized.wav",
+        "prediction": "Fake",
+        "transcription": "is an order placed for Apple iPhone 11 Pro using your Amazon account if you do not authorised disorder press one or press to the authorised dis",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "85a0750f78110442b4c047ff4ab63c07ffa8ae290a26890db8c8e405514e219a",
+        "timestamp": "2025-11-17 10:14:22"
+    },
+    {
+        "filename": "recording_1763363728573.wav",
+        "prediction": "Real",
+        "transcription": "madam I am calling you from your bank security team we have detected and unauthorised transaction of 28500 on your account to stop it I need to verify your identity please confirm your full name if you don't verify immediately the amount will be deducted please share your cards last four digit and the OTP will send",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "53e9d0c2d4e0d3dbf47472f7ef4bd93485b3bfa4e1618c9233c0356dae4dcebe",
+        "timestamp": "2025-11-17 12:45:54"
+    },
+    {
+        "filename": "recording_1763363848723.wav",
+        "prediction": "Real",
+        "transcription": "hello Ms speaking with someone I am calling regarding a verification update link to your mobile number it's a routine just confirming some details would you like to share updating our records for customer in your area",
+        "scam_label": "Neutral",
+        "scam_comment": "Call appears neutral with no strong suspicious patterns.",
+        "file_hash": "22dc4367650f1111ee5bbfb127b0382ae910821e6f8edf523417b222cd97c9c4",
+        "timestamp": "2025-11-17 12:47:47"
+    },
+    {
+        "filename": "tts_1763370984141.wav",
+        "prediction": "Fake",
+        "transcription": "personal health is valuable for researchers and Developers in field such as phonetics speech science linguistics and experimental psychology particularly for tasks involving acrostic analysis of speech",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "c87353ed1bfadedfd8800c1193d223cc084fb1ca63df08c9bac91c42fa118781",
+        "timestamp": "2025-11-17 14:46:52"
+    },
+    {
+        "filename": "241125_normalized.wav",
+        "prediction": "Fake",
+        "transcription": "this message is intended to contact you regarding a legal enforcement action executed under your social security number for suspicious and fraudulent activities committed in the state of Texas and we just suspended your social security number ignoring this will be an intentional second attempt to avoid initial appearance before marriage",
+        "scam_label": "Scam",
+        "scam_comment": "Model considers this call a scam. Do not share personal or financial information.",
+        "file_hash": "a3f492d305016bc70f5949305cda5c576c754a80b608306fd61d76b315f7ca8b",
+        "timestamp": "2025-11-17 15:11:58"
     }
 ]
